@@ -1,7 +1,9 @@
+# app.py
+
 from flask import Flask, render_template, request, jsonify
 from nltk.sentiment import SentimentIntensityAnalyzer
 import nltk
-import sqlite3
+from db import init_db, insert_sentiment  # Import the functions from db.py
 
 nltk.download('vader_lexicon')
 
@@ -9,20 +11,6 @@ app = Flask(__name__)
 
 # Initialize the Sentiment Analyzer
 sia = SentimentIntensityAnalyzer()
-
-# Set up SQLite database
-def init_db():
-    conn = sqlite3.connect('sentiment_analysis.db')
-    c = conn.cursor()
-    c.execute('''
-        CREATE TABLE IF NOT EXISTS history (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            text TEXT NOT NULL,
-            sentiment TEXT NOT NULL
-        )
-    ''')
-    conn.commit()
-    conn.close()
 
 @app.route('/')
 def home():
@@ -44,12 +32,8 @@ def analyze_sentiment():
     else:
         result = 'Neutral'
     
-    # Store in database
-    conn = sqlite3.connect('sentiment_analysis.db')
-    c = conn.cursor()
-    c.execute('INSERT INTO history (text, sentiment) VALUES (?, ?)', (text, result))
-    conn.commit()
-    conn.close()
+    # Store in database using the function from db.py
+    insert_sentiment(text, result)
     
     return jsonify({'sentiment': result})
 
